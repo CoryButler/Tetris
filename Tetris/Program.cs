@@ -15,7 +15,7 @@ namespace Tetris
         }
     }
 
-    class Game
+    class Game_orig
     {
         [DllImport("user32.dll")]
         public static extern short GetAsyncKeyState(int vKey);
@@ -24,34 +24,31 @@ namespace Tetris
         {
             ConsoleColor.DarkGray,
             ConsoleColor.Red,
-            ConsoleColor.DarkYellow,
+            ConsoleColor.DarkCyan,
+            ConsoleColor.DarkGreen,
             ConsoleColor.Yellow,
             ConsoleColor.Green,
-            ConsoleColor.DarkGreen,
             ConsoleColor.Blue,
-            ConsoleColor.DarkCyan,
+            ConsoleColor.DarkYellow,
             ConsoleColor.White,
             ConsoleColor.Gray
         };
 
         List<string> _tetrominos = new List<string>(7);
 
-        uint _screenWidth = 32;
-        uint _screenHeight = 32;
+        private const int _screenWidth = 32;
+        private const int _screenHeight = 32;
 
-        int _fieldWidth = 12;
-        int _fieldHeight = 18;
-        int[] _field;
-        int[,] _field2D;
+        private const int _fieldWidth = 12;
+        private const int _fieldHeight = 18;
+        private int[,] _field2D;
 
-        public Game()
+        public Game_orig()
         {
+
             // Create Screen Buffer
             char[,] _screen2D = new char[_screenWidth, _screenHeight];
-	        char[] screen = new char[_screenWidth * _screenHeight];
 	        ConsoleColor[,] _screenColor2D = new ConsoleColor[_screenWidth, _screenHeight];
-	        ConsoleColor[] screenColor = new ConsoleColor[_screenWidth * _screenHeight];
-	        for (int i = 0; i < _screenWidth * _screenHeight; i++) screen[i] = ' ';
 
             for (int x = 0; x < _screenWidth; x++)
                 for (int y = 0; y < _screenHeight; y++)
@@ -109,11 +106,6 @@ namespace Tetris
             sb.Append(".X..");
             _tetrominos.Add(sb.ToString());
             sb.Clear();
-
-            _field = new int[_fieldWidth * _fieldHeight];
-            for (var x = 0; x < _fieldWidth; x++)
-                for (var y = 0; y < _fieldHeight; y++)
-                    _field[y * _fieldWidth + x] = (x == 0 || x == _fieldWidth - 1 || y == _fieldHeight - 1) ? 9 : 0;
 
             _field2D = new int[_fieldWidth, _fieldHeight];
             for (var x = 0; x < _fieldWidth; x++)
@@ -180,7 +172,6 @@ namespace Tetris
                             for (int coordinateY = 0; coordinateY < 4; coordinateY++)
                                 if (_tetrominos[currentPiece][Rotate(coordinateX, coordinateY, currentRotation)] != '.')
                                 {
-                                    _field[(currentY + coordinateY) * _fieldWidth + (currentX + coordinateX)] = currentPiece + 1;
                                     _field2D[(currentX + coordinateX), (currentY + coordinateY)] = currentPiece + 1;
                                 }
 
@@ -192,7 +183,6 @@ namespace Tetris
                                 for (int coordinateX = 1; coordinateX < _fieldWidth - 1; coordinateX++)
                                 {
                                     makesLine &= (_field2D[coordinateX, currentY + coordinateY]) != 0;
-                                    //makesLine &= (_field[(currentY + coordinateY) * _fieldWidth + coordinateX]) != 0;
                                 }
 
 						        if (makesLine)
@@ -200,7 +190,7 @@ namespace Tetris
                                     // Remove Line, set to =
                                     for (int coordinateX = 1; coordinateX < _fieldWidth - 1; coordinateX++)
                                         _field2D[coordinateX, currentY + coordinateY] = 8;
-								        //_field[(currentY + coordinateY) * _fieldWidth + coordinateX] = 8;
+
 							        lines.Add(currentY + coordinateY);
 						        }						
 					        }
@@ -226,9 +216,6 @@ namespace Tetris
                     for (int x = 0; x < _fieldWidth; x++)
                         for (int y = 0; y < _fieldHeight; y++)
                         {
-                            screen[(y) * _screenWidth + (x)] = "░▓▓▓▓▓▓▓×▓"[_field[y * _fieldWidth + x]];
-                            screenColor[(y) * _screenWidth + (x)] = _colors[_field[y * _fieldWidth + x]];
-
                             _screen2D[x, y] = "░▓▓▓▓▓▓▓×▓"[_field2D[x, y]];
                             _screenColor2D[x, y] = _colors[_field2D[x, y]];
                         }
@@ -238,9 +225,6 @@ namespace Tetris
                         for (int py = 0; py < 4; py++)
                             if (_tetrominos[currentPiece][Rotate(px, py, currentRotation)] != '.')
                             {
-                                screen[(currentY + py) * _screenWidth + (currentX + px)] = '▓';
-                                screenColor[(currentY + py) * _screenWidth + (currentX + px)] = _colors[currentPiece + 1];
-
                                 _screen2D[(currentX + px), (currentY + py)] = '▓';
                                 _screenColor2D[(currentX + px), (currentY + py)] = _colors[currentPiece + 1];
                             }
@@ -251,7 +235,6 @@ namespace Tetris
                             Console.ForegroundColor = _screenColor2D[x, y];
                             Console.SetCursorPosition(x + 2, y + 2);
                             Console.Write(_screen2D[x, y]);
-                            //Thread.Sleep(5);
                         }
 
                     Console.ResetColor();
@@ -267,19 +250,16 @@ namespace Tetris
                             {
                                 for (int py = line; py > 0; py--)
                                     _field2D[px, py] = _field2D[px, py - 1];
-                                    //_field[py * _fieldWidth + px] = _field[(py - 1) * _fieldWidth + px];
-                                _field[px] = 0;
+
                                 _field2D[px, 0] = 0;
                             }
 
                         lines.Clear();
                     }
-                    //Thread.Sleep(1000);
 
                     // Draw Score
                     Console.SetCursorPosition(0, 0);
                     Console.Write("Score: {0}", score);
-                    //Thread.Sleep(1000);
                 }
             }
             
@@ -313,11 +293,12 @@ namespace Tetris
                 for (var coordinateY = 0; coordinateY < 4; coordinateY++)
                 {
                     int tetrominoIndex = Rotate(coordinateX, coordinateY, rotation);
-                    int fieldIndex = (tetrominoY + coordinateY) * _fieldWidth + (tetrominoX + coordinateX);
+                    int fieldIndexX = tetrominoX + coordinateX;
+                    int fieldIndexY = tetrominoY + coordinateY;
 
                     if (tetrominoX + coordinateX >= 0 && tetrominoX + coordinateX < _fieldWidth)
                         if (tetrominoY + coordinateY >= 0 && tetrominoY + coordinateY < _fieldHeight)
-                            if (_tetrominos[tetromino][tetrominoIndex] == 'X' && _field[fieldIndex] != 0)
+                            if (_tetrominos[tetromino][tetrominoIndex] == 'X' && _field2D[fieldIndexX, fieldIndexY] != 0)
                                 return false;
                 }
 
