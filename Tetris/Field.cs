@@ -11,10 +11,40 @@ namespace Tetris
         public int Width => _map.GetLength(0);
         public int Height => _map.GetLength(1);
         public char[,] Map => _map;
-        public char[,] Bounds => _bounds;
+        public char[,] PlayingField => _playingField;
+
+        private Dictionary<char, ConsoleColor> _colorsForeground = new Dictionary<char, ConsoleColor>
+        {
+            { 'A',  ConsoleColor.Black},
+            { 'B',  ConsoleColor.DarkGray},
+            { 'C',  ConsoleColor.Gray},
+            { 'D',  ConsoleColor.Red},
+            { 'E',  ConsoleColor.DarkCyan},
+            { 'F',  ConsoleColor.DarkGreen},
+            { 'G',  ConsoleColor.Yellow},
+            { 'H',  ConsoleColor.Green},
+            { 'I',  ConsoleColor.Blue},
+            { 'J',  ConsoleColor.DarkYellow},
+            { '▓',  ConsoleColor.DarkYellow}
+        };
+
+        private Dictionary<char, char> _sprites = new Dictionary<char, char>
+        {
+            { 'A',  '▓' },
+            { 'B',  '▓' },
+            { 'C',  '▓' },
+            { 'D',  '▓' },
+            { 'E',  '▓' },
+            { 'F',  '▓' },
+            { 'G',  '▓' },
+            { 'H',  '▓' },
+            { 'I',  '▓' },
+            { 'J',  '▓' },
+            { '▓', '9' }
+        };
 
         private readonly char[,] _map;
-        private readonly char[,] _bounds;
+        private readonly char[,] _playingField;
         private readonly ConsoleColor[,] _mapColor;
         private readonly int _highScore = 300;
         private readonly Tuple<int, int> _highScoreCoordinate = new Tuple<int, int>(13, 15);
@@ -29,27 +59,27 @@ namespace Tetris
         {
             List<string> fieldRows = new List<string>();
 
-            fieldRows.Add("▓░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓");
-            fieldRows.Add("▓░░░░░░░░░░▓░░░░░░░░░░░░░▓");
-            fieldRows.Add("▓░░░░░░░░░░▓░░Next Up:░░░▓");
-            fieldRows.Add("▓░░░░░░░░░░▓░░░░░░░░░░░░░▓");
-            fieldRows.Add("▓░░░░░░░░░░▓░░░      ░░░░▓");
-            fieldRows.Add("▓░░░░░░░░░░▓░░░      ░░░░▓");
-            fieldRows.Add("▓░░░░░░░░░░▓░░░      ░░░░▓");
-            fieldRows.Add("▓░░░░░░░░░░▓░░░      ░░░░▓");
-            fieldRows.Add("▓░░░░░░░░░░▓░░░░░░░░░░░░░▓");
-            fieldRows.Add("▓░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓");
-            fieldRows.Add("▓░░░░░░░░░░▓░░░░░░░░░░░░░▓");
-            fieldRows.Add("▓░░░░░░░░░░▓░Score:░░░░░░▓");
-            fieldRows.Add("▓░░░░░░░░░░▓░           ░▓");
-            fieldRows.Add("▓░░░░░░░░░░▓░░░░░░░░░░░░░▓");
-            fieldRows.Add("▓░░░░░░░░░░▓░High Score:░▓");
-            fieldRows.Add("▓░░░░░░░░░░▓░           ░▓");
-            fieldRows.Add("▓░░░░░░░░░░▓░░░░░░░░░░░░░▓");
-            fieldRows.Add("▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓");
+            fieldRows.Add("CBBBBBBBBBBCCCCCCCCCCCCCCC");
+            fieldRows.Add("CBBBBBBBBBBCBBBBBBBBBBBBBC");
+            fieldRows.Add("CBBBBBBBBBBCBBNext Up:BBBC");
+            fieldRows.Add("CBBBBBBBBBBCBBBBBBBBBBBBBC");
+            fieldRows.Add("CBBBBBBBBBBCBBBAAAAAABBBBC");
+            fieldRows.Add("CBBBBBBBBBBCBBBAAAAAABBBBC");
+            fieldRows.Add("CBBBBBBBBBBCBBBAAAAAABBBBC");
+            fieldRows.Add("CBBBBBBBBBBCBBBAAAAAABBBBC");
+            fieldRows.Add("CBBBBBBBBBBCBBBBBBBBBBBBBC");
+            fieldRows.Add("CBBBBBBBBBBCCCCCCCCCCCCCCC");
+            fieldRows.Add("CBBBBBBBBBBCBBBBBBBBBBBBBC");
+            fieldRows.Add("CBBBBBBBBBBCBScore:BBBBBBC");
+            fieldRows.Add("CBBBBBBBBBBCBAAAAAAAAAAABC");
+            fieldRows.Add("CBBBBBBBBBBCBBBBBBBBBBBBBC");
+            fieldRows.Add("CBBBBBBBBBBCBHigh Score:BC");
+            fieldRows.Add("CBBBBBBBBBBCBAAAAAAAAAAABC");
+            fieldRows.Add("CBBBBBBBBBBCBBBBBBBBBBBBBC");
+            fieldRows.Add("CCCCCCCCCCCCCCCCCCCCCCCCCC");
 
             _map = new char[fieldRows[0].Length, fieldRows.Count];
-            _bounds = new char[12, Height];
+            _playingField = new char[12, Height];
             _mapColor = new ConsoleColor[fieldRows[0].Length, fieldRows.Count];
 
             for (var y = 0; y < fieldRows.Count; y++)
@@ -57,8 +87,8 @@ namespace Tetris
                 for (var x = 0; x < fieldRows[y].Length; x++)
                 {
                     _map[x, y] = fieldRows[y][x];
-                    _mapColor[x, y] = _map[x, y] != '░' ? ConsoleColor.White : ConsoleColor.Gray;
-                    if (x < 12) _bounds[x, y] = _map[x, y];
+                    _mapColor[x, y] = _map[x, y] != 'B' ? ConsoleColor.White : ConsoleColor.Gray;
+                    if (x < 12) _playingField[x, y] = _map[x, y];
                 }
             }
 
@@ -85,7 +115,18 @@ namespace Tetris
                         for (int py = 0; py < 4; py++)
                             if (tetromino.Shape[tetromino.Rotate(px, py, tetromino.Rotation)] != '.')
                             {
-                                _map[(tetromino.X + px), (tetromino.Y + py)] = '▓';
+                                _map[(tetromino.X + px), (tetromino.Y + py)] = 'C';
+                                _mapColor[(tetromino.X + px), (tetromino.Y + py)] = tetromino.Color;
+                            }
+        }
+
+        public async void UpdateFieldAsync(Tetromino tetromino)
+        {
+            for (int px = 0; px < 4; px++)
+                        for (int py = 0; py < 4; py++)
+                            if (tetromino.Shape[tetromino.Rotate(px, py, tetromino.Rotation)] != '.')
+                            {
+                                _map[(tetromino.X + px), (tetromino.Y + py)] = 'C';
                                 _mapColor[(tetromino.X + px), (tetromino.Y + py)] = tetromino.Color;
                             }
         }
@@ -96,7 +137,7 @@ namespace Tetris
                         for (int py = 0; py < 4; py++)
                             if (tetromino.Shape[tetromino.Rotate(px, py, tetromino.Rotation)] != '.')
                             {
-                                _map[(tetromino.X + px), (tetromino.Y + py)] = '░';
+                                _map[(tetromino.X + px), (tetromino.Y + py)] = 'B';
                                 _mapColor[(tetromino.X + px), (tetromino.Y + py)] = ConsoleColor.Gray;
                             }
         }
@@ -107,8 +148,19 @@ namespace Tetris
                 for (int y = 0; y < Height; y++)
                 {
                     Console.SetCursorPosition(x + 2, y + 2);
-                    Console.ForegroundColor = _mapColor[x, y];// != '░' ? ConsoleColor.White : ConsoleColor.Gray;
+                    Console.ForegroundColor = _mapColor[x, y];// != 'B' ? ConsoleColor.White : ConsoleColor.Gray;
                     Console.Write(_map[x, y]);
+                }
+        }
+
+        public void DrawField2()
+        {
+            for (int x = 0; x < _playingField.GetLength(0); x++)
+                for (int y = 0; y < _playingField.GetLength(1); y++)
+                {
+                    Console.SetCursorPosition(x + 2, y + 2);
+                    Console.ForegroundColor = _colorsForeground[_playingField[x, y]];
+                    Console.Write(_sprites[_playingField[x, y]]);
                 }
         }
     }

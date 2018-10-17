@@ -16,6 +16,7 @@ namespace Tetris
         private int _shapeIndex;
         private List<ConsoleColor> _colors;
         private const int _speed = 1;
+        private bool _rotateHold;
 
         public string Shape => _shapes[_shapeIndex];
         public ConsoleColor Color => _colors[_shapeIndex];
@@ -32,7 +33,7 @@ namespace Tetris
 
         public bool CanMoveDown(Field field)
         {
-            return WillFitAtDestination(X, Y + 1, field);
+            return WillFitAtDestination(X, Y + 1, Rotation, field);
         }
 
         private List<string> InitShapes()
@@ -118,29 +119,40 @@ namespace Tetris
             return 0;
         }
 
-        public void UpdatePositionInField(Field field)
+        public async void UpdatePositionInField(Field field)
         {
-            bool[] keys = new bool[4];
-            for (int i = 0; i < 4; i++)				   // R   L   D Z
+            while (true)
+            {
+                bool[] keys = new bool[4];
+                for (int i = 0; i < 4; i++)                // R   L   D Z
                     keys[i] = (0x8000 & GetAsyncKeyState((char)("\x27\x25\x28Z"[i]))) != 0;
 
-                X += (keys[0] && WillFitAtDestination(X + _speed, Y, field)) ? _speed : 0;
-		        X -= (keys[1] && WillFitAtDestination(X - _speed, Y, field)) ? _speed : 0;		
-                Y += (keys[2] && WillFitAtDestination(X, Y + _speed, field)) ? _speed : 0;
+                X += (keys[0] && WillFitAtDestination(X + _speed, Y, Rotation, field)) ? _speed : 0;
+                X -= (keys[1] && WillFitAtDestination(X - _speed, Y, Rotation, field)) ? _speed : 0;
+                Y += (keys[2] && WillFitAtDestination(X, Y + _speed, Rotation, field)) ? _speed : 0;
+                if (keys[3])
+                {
+                    Rotation += (_rotateHold && WillFitAtDestination(X, Y, Rotation + 1, field)) ? 1 : 0;
+                    _rotateHold = false;
+                }
+                else
+                    _rotateHold = true;
+                return;
+            }
         }
 
-        public bool WillFitAtDestination(int destinationX, int destinationY, Field field)
+        public bool WillFitAtDestination(int destinationX, int destinationY, int rotation, Field field)
         {
             for (var x = 0; x < 4; x++)
                 for (var y = 0; y < 4; y++)
                 {
-                    int tetrominoIndex = Rotate(x, y, Rotation);
+                    int tetrominoIndex = Rotate(x, y, rotation);
                     int fieldIndexX = destinationX + x;
                     int fieldIndexY = destinationY + y;
 
                     if (destinationX + x >= 0 && destinationX + x < field.Width)
                         if (destinationY + y >= 0 && destinationY + y < field.Height)
-                            if (Shape[tetrominoIndex] == 'X' && field.Bounds[fieldIndexX, fieldIndexY] != '░')
+                            if (Shape[tetrominoIndex] == 'X' && field.PlayingField[fieldIndexX, fieldIndexY] != '░')
                                 return false;
                 }
 

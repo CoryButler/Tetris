@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,11 @@ namespace Tetris
 {
     class Game
     {
+        [DllImport("user32.dll")]
+        public static extern short GetAsyncKeyState(int vKey);
+        private const int _speed = 1;
+        private bool _rotateHold;
+
         private bool _isGameOver = false;
         private const string _respondYes = "Y";
         private const string _respondNo = "N";
@@ -25,6 +31,8 @@ namespace Tetris
             Field field = new Field();
             Tetromino tetromino = new Tetromino();
             field.UpdateField(tetromino);
+
+                //tetromino.UpdatePositionInField(field);
             
             bool forceDown = true;
             var speedCount = 0;
@@ -39,7 +47,20 @@ namespace Tetris
                 speedCount++;
                 forceDown = (speedCount == speed);
 
-                tetromino.UpdatePositionInField(field);
+                bool[] keys = new bool[4];
+                for (int i = 0; i < 4; i++)                // R   L   D Z
+                    keys[i] = (0x8000 & GetAsyncKeyState((char)("\x27\x25\x28Z"[i]))) != 0;
+
+                tetromino.X += (keys[0] && tetromino.WillFitAtDestination(tetromino.X + _speed, tetromino.Y, tetromino.Rotation, field)) ? _speed : 0;
+                tetromino.X -= (keys[1] && tetromino.WillFitAtDestination(tetromino.X - _speed, tetromino.Y, tetromino.Rotation, field)) ? _speed : 0;
+                tetromino.Y += (keys[2] && tetromino.WillFitAtDestination(tetromino.X, tetromino.Y + _speed, tetromino.Rotation, field)) ? _speed : 0;
+                if (keys[3])
+                {
+                    tetromino.Rotation += (_rotateHold && tetromino.WillFitAtDestination(tetromino.X, tetromino.Y, tetromino.Rotation + 1, field)) ? 1 : 0;
+                    _rotateHold = false;
+                }
+                else
+                    _rotateHold = true;
 
                 if (forceDown)
                 {
@@ -48,7 +69,7 @@ namespace Tetris
                     pieceCount++;
                     if (pieceCount % 50 == 0)
                         if (speed >= 10) speed--;
-                    if (tetromino.WillFitAtDestination(tetromino.X, tetromino.Y + 1, field))
+                    if (tetromino.WillFitAtDestination(tetromino.X, tetromino.Y + 1, tetromino.Rotation, field))
                     {
                         tetromino.Y++;
                     }
@@ -59,7 +80,7 @@ namespace Tetris
                             for (int coordinateY = 0; coordinateY < 4; coordinateY++)
                                 if (tetromino.Shape[tetromino.Rotate(coordinateX, coordinateY, tetromino.Rotation)] != '.')
                                 {
-                                    field.Bounds[(tetromino.X + coordinateX), (tetromino.Y + coordinateY)] = '▓';
+                                    field.PlayingField[(tetromino.X + coordinateX), (tetromino.Y + coordinateY)] = '▓';
                                     field.Map[(tetromino.X + coordinateX), (tetromino.Y + coordinateY)] = '▓';
                                 }
 
@@ -68,15 +89,15 @@ namespace Tetris
                             if (tetromino.Y + coordinateY < field.Height - 1)
                             {
                                 bool makesLine = true;
-                                for (int coordinateX = 1; coordinateX < field.Bounds.GetLength(0) - 1; coordinateX++)
+                                for (int coordinateX = 1; coordinateX < field.PlayingField.GetLength(0) - 1; coordinateX++)
                                 {
-                                    makesLine &= (field.Map[coordinateX, tetromino.Y + coordinateY]) != 0;
+                                    makesLine &= (field.Map[coordinateX, tetromino.Y + coordinateY]) != '░';
                                 }
 
                                 if (makesLine)
                                 {
                                     // Remove Line, set to =
-                                    for (int coordinateX = 1; coordinateX < field.Bounds.GetLength(0) - 1; coordinateX++)
+                                    for (int coordinateX = 1; coordinateX < field.PlayingField.GetLength(0) - 1; coordinateX++)
                                         field.Map[coordinateX, tetromino.Y + coordinateY] = '*';
 
                                     lines.Add(tetromino.Y + coordinateY);
@@ -94,12 +115,34 @@ namespace Tetris
                         tetromino = new Tetromino();
 
                         // If piece does not fit straight away, game over!
-                        _isGameOver = !tetromino.WillFitAtDestination(tetromino.X, tetromino.Y, field);
+                        _isGameOver = !tetromino.WillFitAtDestination(tetromino.X, tetromino.Y, tetromino.Rotation, field);
+                    }
+                }
+
+                if (forceDown || keys.Any(k => k == true))
+                {
+                    field.UpdateField(tetromino);
+                    field.DrawField2();
+                    field.ResetField(tetromino);
+
+                    // Animate Line Completion
+                    if (lines.Count > 0)
+                    {
+                        // Display Frame (cheekily to draw lines)
+                        Thread.Sleep(400); // Delay a bit
+
+                        foreach (var line in lines)
+                            for (int px = 1; px < field.Width - 1; px++)
+                            {
+                                for (int py = line; py > 0; py--)
+                                    field.Map[px, py] = field.Map[px, py - 1];
+
+                                field.Map[px, 0] = '░';
+                            }
+
+                        lines.Clear();
                     }
 
-                    field.UpdateField(tetromino);
-                    field.DrawField();
-                    field.ResetField(tetromino);
                 }
             }
         }
