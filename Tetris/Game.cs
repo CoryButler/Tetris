@@ -80,8 +80,8 @@ namespace Tetris
                             for (int coordinateY = 0; coordinateY < 4; coordinateY++)
                                 if (tetromino.Shape[tetromino.Rotate(coordinateX, coordinateY, tetromino.Rotation)] != '.')
                                 {
-                                    field.PlayingField[(tetromino.X + coordinateX), (tetromino.Y + coordinateY)] = '▓';
-                                    field.Map[(tetromino.X + coordinateX), (tetromino.Y + coordinateY)] = '▓';
+                                    field.PlayingField[(tetromino.X + coordinateX), (tetromino.Y + coordinateY)] = tetromino.Sprite;
+                                    field.PlayingField[(tetromino.X + coordinateX), (tetromino.Y + coordinateY)] = tetromino.Sprite;
                                 }
 
                         // Check for lines
@@ -91,14 +91,14 @@ namespace Tetris
                                 bool makesLine = true;
                                 for (int coordinateX = 1; coordinateX < field.PlayingField.GetLength(0) - 1; coordinateX++)
                                 {
-                                    makesLine &= (field.Map[coordinateX, tetromino.Y + coordinateY]) != '░';
+                                    makesLine &= (field.PlayingField[coordinateX, tetromino.Y + coordinateY]) != 'B';
                                 }
 
                                 if (makesLine)
                                 {
                                     // Remove Line, set to =
                                     for (int coordinateX = 1; coordinateX < field.PlayingField.GetLength(0) - 1; coordinateX++)
-                                        field.Map[coordinateX, tetromino.Y + coordinateY] = '*';
+                                        field.PlayingField[coordinateX, tetromino.Y + coordinateY] = 'D';
 
                                     lines.Add(tetromino.Y + coordinateY);
                                 }
@@ -122,7 +122,7 @@ namespace Tetris
                 if (forceDown || keys.Any(k => k == true))
                 {
                     field.UpdateField(tetromino);
-                    field.DrawField2();
+                    field.DrawField2(tetromino);
                     field.ResetField(tetromino);
 
                     // Animate Line Completion
@@ -132,12 +132,12 @@ namespace Tetris
                         Thread.Sleep(400); // Delay a bit
 
                         foreach (var line in lines)
-                            for (int px = 1; px < field.Width - 1; px++)
+                            for (int px = 1; px < field.PlayingField.GetLength(0) - 1; px++)
                             {
                                 for (int py = line; py > 0; py--)
-                                    field.Map[px, py] = field.Map[px, py - 1];
+                                    field.PlayingField[px, py] = field.PlayingField[px, py - 1];
 
-                                field.Map[px, 0] = '░';
+                                field.PlayingField[px, 0] = 'B';
                             }
 
                         lines.Clear();

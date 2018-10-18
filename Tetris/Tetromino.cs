@@ -12,12 +12,14 @@ namespace Tetris
         [DllImport("user32.dll")]
         public static extern short GetAsyncKeyState(int vKey);
 
+        private string _sprites = "0123456";
         private List<string> _shapes;
         private int _shapeIndex;
         private List<ConsoleColor> _colors;
         private const int _speed = 1;
         private bool _rotateHold;
 
+        public char Sprite => _sprites[_shapeIndex];
         public string Shape => _shapes[_shapeIndex];
         public ConsoleColor Color => _colors[_shapeIndex];
         public int Rotation { get; set; } = 0;
@@ -152,7 +154,7 @@ namespace Tetris
 
                     if (destinationX + x >= 0 && destinationX + x < field.Width)
                         if (destinationY + y >= 0 && destinationY + y < field.Height)
-                            if (Shape[tetrominoIndex] == 'X' && field.PlayingField[fieldIndexX, fieldIndexY] != '░')
+                            if (Shape[tetrominoIndex] == 'X' && field.PlayingField[fieldIndexX, fieldIndexY] != 'B')
                                 return false;
                 }
 

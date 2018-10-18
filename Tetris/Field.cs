@@ -18,14 +18,14 @@ namespace Tetris
             { 'A',  ConsoleColor.Black},
             { 'B',  ConsoleColor.DarkGray},
             { 'C',  ConsoleColor.Gray},
-            { 'D',  ConsoleColor.Red},
-            { 'E',  ConsoleColor.DarkCyan},
-            { 'F',  ConsoleColor.DarkGreen},
-            { 'G',  ConsoleColor.Yellow},
-            { 'H',  ConsoleColor.Green},
-            { 'I',  ConsoleColor.Blue},
-            { 'J',  ConsoleColor.DarkYellow},
-            { '▓',  ConsoleColor.DarkYellow}
+            { '0',  ConsoleColor.Red},
+            { '1',  ConsoleColor.DarkCyan},
+            { '2',  ConsoleColor.DarkGreen},
+            { '3',  ConsoleColor.Yellow},
+            { '4',  ConsoleColor.Green},
+            { '5',  ConsoleColor.Blue},
+            { '6',  ConsoleColor.DarkYellow},
+            { 'D',  ConsoleColor.White}
         };
 
         private Dictionary<char, char> _sprites = new Dictionary<char, char>
@@ -33,14 +33,14 @@ namespace Tetris
             { 'A',  '▓' },
             { 'B',  '▓' },
             { 'C',  '▓' },
-            { 'D',  '▓' },
-            { 'E',  '▓' },
-            { 'F',  '▓' },
-            { 'G',  '▓' },
-            { 'H',  '▓' },
-            { 'I',  '▓' },
-            { 'J',  '▓' },
-            { '▓', '9' }
+            { '0',  '▓' },
+            { '1',  '▓' },
+            { '2',  '▓' },
+            { '3',  '▓' },
+            { '4',  '▓' },
+            { '5',  '▓' },
+            { '6',  '▓' },
+            { 'D',  '*' }
         };
 
         private readonly char[,] _map;
@@ -115,7 +115,7 @@ namespace Tetris
                         for (int py = 0; py < 4; py++)
                             if (tetromino.Shape[tetromino.Rotate(px, py, tetromino.Rotation)] != '.')
                             {
-                                _map[(tetromino.X + px), (tetromino.Y + py)] = 'C';
+                                _map[(tetromino.X + px), (tetromino.Y + py)] = tetromino.Sprite;
                                 _mapColor[(tetromino.X + px), (tetromino.Y + py)] = tetromino.Color;
                             }
         }
@@ -126,7 +126,7 @@ namespace Tetris
                         for (int py = 0; py < 4; py++)
                             if (tetromino.Shape[tetromino.Rotate(px, py, tetromino.Rotation)] != '.')
                             {
-                                _map[(tetromino.X + px), (tetromino.Y + py)] = 'C';
+                                _playingField[(tetromino.X + px), (tetromino.Y + py)] = tetromino.Sprite;
                                 _mapColor[(tetromino.X + px), (tetromino.Y + py)] = tetromino.Color;
                             }
         }
@@ -153,14 +153,23 @@ namespace Tetris
                 }
         }
 
-        public void DrawField2()
+        public void DrawField2(Tetromino tetromino)
         {
             for (int x = 0; x < _playingField.GetLength(0); x++)
                 for (int y = 0; y < _playingField.GetLength(1); y++)
                 {
-                    Console.SetCursorPosition(x + 2, y + 2);
-                    Console.ForegroundColor = _colorsForeground[_playingField[x, y]];
-                    Console.Write(_sprites[_playingField[x, y]]);
+                                Console.SetCursorPosition(x + 2, y + 2);
+                                Console.ForegroundColor = _colorsForeground[_playingField[x, y]];
+                                Console.Write(_sprites[_playingField[x, y]]);
+                    for (var tx = 0; tx < 4; tx++)
+                        for (var ty = 0; ty < 4; ty++)
+                            if (tetromino.X + tx == x && tetromino.Y + ty == y
+                                && tetromino.Shape[tetromino.Rotate(tx, ty, tetromino.Rotation)] != '.')
+                            {
+                                Console.SetCursorPosition(x + 2, y + 2);
+                                Console.ForegroundColor = tetromino.Color;
+                                Console.Write(_sprites[tetromino.Sprite]);
+                            }
                 }
         }
     }
