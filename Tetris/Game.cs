@@ -48,7 +48,7 @@ namespace Tetris
                 forceDown = (speedCount == speed);
 
                 bool[] keys = new bool[4];
-                for (int i = 0; i < 4; i++)                // R   L   D Z
+                for (int i = 0; i < 4; i++)                     // R   L   D Z
                     keys[i] = (0x8000 & GetAsyncKeyState((char)("\x27\x25\x28Z"[i]))) != 0;
 
                 tetromino.X += (keys[0] && tetromino.WillFitAtDestination(tetromino.X + _speed, tetromino.Y, tetromino.Rotation, field)) ? _speed : 0;
